@@ -1,0 +1,31 @@
+# Video files — must NOT be committed (challenge rules)
+*.mp4
+*.avi
+*.mov
+*.mkv
+clips/
+dataset/
+
+# Events output
+events.jsonl
+*.jsonl
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# DB
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Model weights
+*.pt
+*.pth
