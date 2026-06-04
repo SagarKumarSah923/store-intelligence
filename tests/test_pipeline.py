@@ -1,5 +1,5 @@
 """
-test_pipeline.py — Tests for detection pipeline event schema and emission.
+test_pipeline.py - Tests for detection pipeline event schema and emission.
 
 # PROMPT: "Write pytest tests for a retail CCTV event pipeline.
 #          Test: schema validation, deduplication, entry/exit logic,

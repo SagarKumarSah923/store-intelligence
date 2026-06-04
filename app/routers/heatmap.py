@@ -1,9 +1,3 @@
-"""
-GET /stores/{store_id}/heatmap
-Zone visit frequency + avg dwell, normalised 0-100 for grid rendering.
-Includes data_confidence flag if < 20 sessions.
-"""
-
 from fastapi import APIRouter
 from app.database import get_db
 from app.logger import get_logger
@@ -11,27 +5,24 @@ from app.logger import get_logger
 router = APIRouter()
 logger = get_logger(__name__)
 
-ZONE_ORDER = ["ENTRY_EXIT","SKINCARE","CLEAN_BEAUTY","MAKEUP",
-              "FACE","LIPS_EYES","BILLING","ACCESSORIES","STOCKROOM"]
-
 
 @router.get("/{store_id}/heatmap")
 async def get_heatmap(store_id: str):
     async with await get_db() as db:
         async with db.execute("""
             SELECT zone_id,
-                   COUNT(DISTINCT visitor_id)        AS visit_count,
-                   AVG(CASE WHEN dwell_ms>0 THEN dwell_ms END) AS avg_dwell_ms
-            FROM events
-            WHERE store_id=? AND event_type='ZONE_EXIT'
-              AND is_staff=0 AND zone_id IS NOT NULL
+                   COUNT(DISTINCT track_id)        AS visit_count,
+                   AVG(CASE WHEN event_type='zone_exited' THEN (julianday(event_time) - julianday(event_time)) * 86400 END) AS avg_dwell_s
+            FROM zone_events
+            WHERE store_id=? AND event_type='zone_exited'
+              AND zone_id IS NOT NULL
             GROUP BY zone_id
         """, (store_id,)) as cur:
             rows = await cur.fetchall()
 
         async with db.execute("""
-            SELECT COUNT(DISTINCT visitor_id) FROM events
-            WHERE store_id=? AND event_type='ENTRY' AND is_staff=0
+            SELECT COUNT(DISTINCT id_token) FROM entry_exit_events
+            WHERE store_id=? AND event_type='entry' AND is_staff=0
         """, (store_id,)) as cur:
             r = await cur.fetchone()
             total_sessions = r[0] if r else 0
@@ -41,7 +32,7 @@ async def get_heatmap(store_id: str):
             "store_id": store_id,
             "zones": [],
             "data_confidence": "LOW",
-            "total_sessions": 0
+            "total_sessions": total_sessions
         }
 
     max_visits = max((r[1] for r in rows), default=1)
@@ -54,7 +45,7 @@ async def get_heatmap(store_id: str):
         zones.append({
             "zone_id": zone_id,
             "visit_count": visits,
-            "avg_dwell_ms": round(avg_dwell),
+            "avg_dwell_s": round(avg_dwell),
             "frequency_score": round(visits / max_visits * 100),
             "dwell_score": round(avg_dwell / max_dwell * 100) if max_dwell > 0 else 0,
             "heat_score": round((visits/max_visits*0.6 + avg_dwell/max_dwell*0.4) * 100)

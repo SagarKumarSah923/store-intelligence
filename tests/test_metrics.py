@@ -1,5 +1,5 @@
 """
-test_metrics.py — Integration tests for Intelligence API endpoints.
+test_metrics.py - Integration tests for Intelligence API endpoints.
 
 # PROMPT: "Write async pytest tests for a FastAPI store analytics API.
 #          Test all endpoints: /metrics, /funnel, /heatmap, /anomalies, /health.
@@ -60,7 +60,7 @@ async def seeded_client(client):
     staff = f"VIS_STAFF_{uuid.uuid4().hex[:4].upper()}"
     events = []
 
-    # Staff events — should be excluded from metrics
+    # Staff events - should be excluded from metrics
     events += [
         _ev("ENTRY", staff, is_staff=True, minutes_ago=50),
         _ev("ZONE_ENTER", staff, zone_id="SKINCARE", is_staff=True, minutes_ago=48),

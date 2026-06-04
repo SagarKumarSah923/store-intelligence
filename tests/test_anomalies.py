@@ -1,5 +1,5 @@
 """
-test_anomalies.py — Tests for anomaly detection logic.
+test_anomalies.py - Tests for anomaly detection logic.
 
 # PROMPT: "Test anomaly detection for retail store: queue spike, dead zone,
 #          conversion drop, stale feed. Each should trigger at correct threshold."

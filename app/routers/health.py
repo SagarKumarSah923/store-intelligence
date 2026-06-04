@@ -1,8 +1,3 @@
-"""
-GET /health — service status + STALE_FEED warning per store.
-This is what an on-call engineer checks first.
-"""
-
 from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 from app.database import get_db, check_db_health
@@ -23,8 +18,8 @@ async def health_check():
     if db_status["status"] == "ok":
         async with await get_db() as db:
             async with db.execute("""
-                SELECT store_id, camera_id, MAX(timestamp) as last_event
-                FROM events GROUP BY store_id, camera_id
+                SELECT store_id, camera_id, MAX(event_timestamp) as last_event
+                FROM entry_exit_events GROUP BY store_id, camera_id
             """) as cur:
                 rows = await cur.fetchall()
 

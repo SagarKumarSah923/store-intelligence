@@ -1,5 +1,5 @@
 """
-live_dashboard.py — Terminal dashboard using Rich.
+live_dashboard.py - Terminal dashboard using Rich.
 Shows real-time metrics updating as events flow in.
 Run: python dashboard/live_dashboard.py --store STORE_PURPLLE_001 --api http://localhost:8000
 """
@@ -45,8 +45,8 @@ def make_metrics_panel(data: dict) -> Panel:
     t.add_row("📈 Conversion Rate",   f"{float(data.get('conversion_rate', 0))*100:.1f}%")
     t.add_row("🛒 Queue Depth",       str(data.get("queue_depth", 0)))
     t.add_row("🚶 Abandonment Rate",  f"{float(data.get('abandonment_rate', 0))*100:.1f}%")
-    last = data.get("last_event_at", "—")
-    t.add_row("🕐 Last Event",        str(last)[:19] if last else "—")
+    last = data.get("last_event_at", "-")
+    t.add_row("🕐 Last Event",        str(last)[:19] if last else "-")
     return Panel(t, title="[bold green]📊 Live Store Metrics[/bold green]", border_style="green")
 
 
@@ -61,7 +61,7 @@ def make_funnel_panel(data: dict) -> Panel:
     for stage in data["funnel"]:
         icon = stage_icons.get(stage["stage"], "·")
         drop = stage["drop_off_pct"]
-        drop_str = f"{drop:.1f}%" if drop > 0 else "—"
+        drop_str = f"{drop:.1f}%" if drop > 0 else "-"
         t.add_row(f"{icon} {stage['label']}", str(stage["visitors"]), drop_str)
     overall = data.get("overall_conversion_pct", 0)
     return Panel(t, title=f"[bold blue]🔽 Conversion Funnel  ({overall:.1f}% overall)[/bold blue]",

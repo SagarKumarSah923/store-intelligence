@@ -1,24 +1,131 @@
 {
-  "store_id": "STORE_PURPLLE_001",
+  "store_id": "ST1008",
+  "store_code": "store_1008",
   "store_name": "Purplle Beauty Store",
   "city": "Mumbai",
   "open_hours": { "open": "10:00", "close": "22:00" },
   "cameras": [
-    { "camera_id": "CAM_FLOOR_01",   "file": "1780124630631_CAM_1.mp4", "angle": "main_floor_skincare",  "zones_covered": ["SKINCARE","CLEAN_BEAUTY"] },
-    { "camera_id": "CAM_FLOOR_02",   "file": "1780124630632_CAM_2.mp4", "angle": "main_floor_makeup",    "zones_covered": ["MAKEUP","FACE","LIPS_EYES"] },
-    { "camera_id": "CAM_ENTRY_01",   "file": "1780124630632_CAM_3.mp4", "angle": "entry_exit_threshold", "zones_covered": ["ENTRY_EXIT"] },
-    { "camera_id": "CAM_STOCK_01",   "file": "1780124630633_CAM_4.mp4", "angle": "stockroom",            "zones_covered": ["STOCKROOM"], "staff_only": true },
-    { "camera_id": "CAM_BILLING_01", "file": "1780124630633_CAM_5.mp4", "angle": "billing_counter",      "zones_covered": ["BILLING","ACCESSORIES"] }
+    {
+      "camera_id": "CAM_ENTRY_01",
+      "file": "CAM_3_-_entry.mp4",
+      "angle": "entry_exit_threshold",
+      "zones_covered": ["ENTRY_EXIT"],
+      "is_entry_cam": true
+    },
+    {
+      "camera_id": "CAM_ENTRY_02",
+      "file": "entry_1.mp4",
+      "angle": "entry_secondary",
+      "zones_covered": ["ENTRY_EXIT"],
+      "is_entry_cam": true
+    },
+    {
+      "camera_id": "CAM_ENTRY_03",
+      "file": "entry_2.mp4",
+      "angle": "entry_tertiary",
+      "zones_covered": ["ENTRY_EXIT"],
+      "is_entry_cam": true
+    },
+    {
+      "camera_id": "CAM_FLOOR_01",
+      "file": "CAM_1_-_zone.mp4",
+      "angle": "main_floor_skincare",
+      "zones_covered": ["SKINCARE", "MINIMALIST", "FOXTALE", "LEFT_SHELF"]
+    },
+    {
+      "camera_id": "CAM_FLOOR_02",
+      "file": "CAM_2_-_zone.mp4",
+      "angle": "main_floor_makeup",
+      "zones_covered": ["MAKEUP", "FACES_CANADA", "LOREAL", "RIGHT_SHELF"]
+    },
+    {
+      "camera_id": "CAM_BILLING_01",
+      "file": "CAM_5_-_billing.mp4",
+      "angle": "billing_counter",
+      "zones_covered": ["BILLING", "CASH_COUNTER"]
+    },
+    {
+      "camera_id": "CAM_BILLING_02",
+      "file": "billing_area.mp4",
+      "angle": "billing_area_wide",
+      "zones_covered": ["BILLING", "ACCESSORIES"]
+    }
   ],
   "zones": [
-    { "zone_id": "ENTRY_EXIT",   "sku_zone": null,           "camera_id": "CAM_ENTRY_01",   "is_entry": true,  "staff_only": false },
-    { "zone_id": "SKINCARE",     "sku_zone": "SKINCARE",     "camera_id": "CAM_FLOOR_01",   "is_entry": false, "staff_only": false },
-    { "zone_id": "CLEAN_BEAUTY", "sku_zone": "CLEAN_BEAUTY", "camera_id": "CAM_FLOOR_01",   "is_entry": false, "staff_only": false },
-    { "zone_id": "MAKEUP",       "sku_zone": "MAKEUP",       "camera_id": "CAM_FLOOR_02",   "is_entry": false, "staff_only": false },
-    { "zone_id": "FACE",         "sku_zone": "FACE",         "camera_id": "CAM_FLOOR_02",   "is_entry": false, "staff_only": false },
-    { "zone_id": "LIPS_EYES",    "sku_zone": "LIPS_EYES",    "camera_id": "CAM_FLOOR_02",   "is_entry": false, "staff_only": false },
-    { "zone_id": "BILLING",      "sku_zone": "BILLING",      "camera_id": "CAM_BILLING_01", "is_entry": false, "staff_only": false },
-    { "zone_id": "ACCESSORIES",  "sku_zone": "ACCESSORIES",  "camera_id": "CAM_BILLING_01", "is_entry": false, "staff_only": false },
-    { "zone_id": "STOCKROOM",    "sku_zone": null,            "camera_id": "CAM_STOCK_01",   "is_entry": false, "staff_only": true }
+    {
+      "zone_id": "PURPLLE_ST1008_Z_ENTRY",
+      "zone_name": "Entry / Exit",
+      "zone_type": "ENTRY",
+      "is_revenue_zone": "No",
+      "camera_id": "CAM_ENTRY_01",
+      "is_entry": true,
+      "staff_only": false,
+      "polygon": {"x1": 0.0, "y1": 0.5, "x2": 1.0, "y2": 1.0}
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z01",
+      "zone_name": "Left Shelf - Skincare",
+      "zone_type": "SHELF",
+      "is_revenue_zone": "Yes",
+      "camera_id": "CAM_FLOOR_01",
+      "is_entry": false,
+      "staff_only": false,
+      "brands": ["Minimalist", "Foxtale", "Aqualogica", "TFS", "Salm"]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z02",
+      "zone_name": "Right Shelf - Makeup",
+      "zone_type": "SHELF",
+      "is_revenue_zone": "Yes",
+      "camera_id": "CAM_FLOOR_02",
+      "is_entry": false,
+      "staff_only": false,
+      "brands": ["Faces Canada", "Lakme", "Maybelline", "Loreal", "Swiss Beauty"]
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z03",
+      "zone_name": "Makeup Unit / FOH",
+      "zone_type": "GONDOLA",
+      "is_revenue_zone": "Yes",
+      "camera_id": "CAM_FLOOR_01",
+      "is_entry": false,
+      "staff_only": false
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z04",
+      "zone_name": "Fragrance & Nail",
+      "zone_type": "SHELF",
+      "is_revenue_zone": "Yes",
+      "camera_id": "CAM_FLOOR_02",
+      "is_entry": false,
+      "staff_only": false
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z_BILLING_01",
+      "zone_name": "Billing Counter Queue",
+      "zone_type": "BILLING",
+      "is_revenue_zone": "Yes",
+      "camera_id": "CAM_BILLING_01",
+      "is_entry": false,
+      "staff_only": false
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z_ACCESSORIES",
+      "zone_name": "Accessories",
+      "zone_type": "SHELF",
+      "is_revenue_zone": "Yes",
+      "camera_id": "CAM_BILLING_02",
+      "is_entry": false,
+      "staff_only": false
+    },
+    {
+      "zone_id": "PURPLLE_ST1008_Z_BOH",
+      "zone_name": "Back of House",
+      "zone_type": "BOH",
+      "is_revenue_zone": "No",
+      "camera_id": "CAM_BILLING_02",
+      "is_entry": false,
+      "staff_only": true
+    }
   ]
 }

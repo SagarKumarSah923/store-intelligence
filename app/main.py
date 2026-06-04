@@ -1,5 +1,5 @@
 """
-Store Intelligence API — FastAPI entrypoint.
+Store Intelligence API - FastAPI entrypoint.
 Production-aware: structured logging, trace IDs, graceful error handling.
 """
 
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Store Intelligence API",
-    description="Real-time retail analytics from CCTV — Purplle Tech Challenge 2026",
+    description="Real-time retail analytics from CCTV - Purplle Tech Challenge 2026",
     version="1.0.0",
     lifespan=lifespan,
 )

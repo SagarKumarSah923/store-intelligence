@@ -1,7 +1,7 @@
 # Store Intelligence System
-**Purplle Tech Challenge 2026 — Round 2**
+**Purplle Tech Challenge 2026 - Round 2**
 
-AI-powered Store Intelligence System — CCTV-based real-time visitor tracking, anomaly detection & analytics API.
+AI-powered Store Intelligence System - CCTV-based real-time visitor tracking, anomaly detection & analytics API.
 
 ---
 
@@ -48,7 +48,7 @@ print(json.dumps([json.loads(l) for l in lines]))
 | POST | `/events/ingest` | Ingest batch of events (max 500, idempotent) |
 | GET | `/stores/{id}/metrics` | Visitors, conversion rate, dwell, queue depth |
 | GET | `/stores/{id}/funnel` | Entry → Browse → Billing → Purchase funnel |
-| GET | `/stores/{id}/heatmap` | Zone heat scores (0–100) |
+| GET | `/stores/{id}/heatmap` | Zone heat scores (0-100) |
 | GET | `/stores/{id}/anomalies` | Active anomalies with severity + action |
 | GET | `/health` | Service health + STALE_FEED warnings |
 

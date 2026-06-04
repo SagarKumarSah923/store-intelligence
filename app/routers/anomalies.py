@@ -1,9 +1,3 @@
-"""
-GET /stores/{store_id}/anomalies
-Detects: BILLING_QUEUE_SPIKE, CONVERSION_DROP, DEAD_ZONE, STALE_FEED.
-Severity: INFO / WARN / CRITICAL. Each has a suggested_action.
-"""
-
 from fastapi import APIRouter
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
@@ -12,10 +6,18 @@ from app.logger import get_logger
 router = APIRouter()
 logger = get_logger(__name__)
 
-QUEUE_SPIKE_THRESHOLD   = 5     # people in queue = WARN, >8 = CRITICAL
-DEAD_ZONE_MINUTES       = 30    # no visits in 30 min = anomaly
-STALE_FEED_MINUTES      = 10    # no events in 10 min = STALE_FEED
-CONVERSION_DROP_PCT     = 30.0  # % drop vs recent avg = anomaly
+
+def _resolve_store_ids(store_id: str) -> tuple[str, str]:
+    if store_id.startswith("STORE_"):
+        return store_id, store_id.replace("STORE_", "ST", 1)
+    if store_id.startswith("ST"):
+        return store_id, "STORE_" + store_id[2:]
+    return store_id, store_id
+
+QUEUE_SPIKE_THRESHOLD   = 5
+DEAD_ZONE_MINUTES       = 30
+STALE_FEED_MINUTES      = 10
+CONVERSION_DROP_PCT     = 30.0
 
 
 @router.get("/{store_id}/anomalies")
@@ -23,17 +25,17 @@ async def get_anomalies(store_id: str):
     now = datetime.now(timezone.utc)
     anomalies = []
 
-    async with await get_db() as db:
+    store_id_a, store_id_b = _resolve_store_ids(store_id)
 
-        # ── 1. BILLING QUEUE SPIKE ───────────────────────────────────────────
+    async with await get_db() as db:
         async with db.execute("""
-            SELECT COUNT(DISTINCT visitor_id) FROM events
-            WHERE store_id=? AND event_type='BILLING_QUEUE_JOIN' AND is_staff=0
-              AND visitor_id NOT IN (
-                SELECT DISTINCT visitor_id FROM events
-                WHERE store_id=? AND event_type='EXIT'
+            SELECT COUNT(DISTINCT track_id) FROM queue_events
+            WHERE (store_id=? OR store_id=?) AND event_type='queue_completed'
+              AND track_id NOT IN (
+                SELECT DISTINCT track_id FROM queue_events
+                WHERE (store_id=? OR store_id=?) AND event_type='queue_abandoned'
               )
-        """, (store_id, store_id)) as cur:
+        """, (store_id_a, store_id_b, store_id_a, store_id_b)) as cur:
             r = await cur.fetchone()
             queue_depth = r[0] if r else 0
 
@@ -48,21 +50,26 @@ async def get_anomalies(store_id: str):
                 "suggested_action": "Open additional billing counter or redirect customers to express checkout"
             })
 
-        # ── 2. DEAD ZONE (no visits in 30 min) ──────────────────────────────
         cutoff = (now - timedelta(minutes=DEAD_ZONE_MINUTES)).isoformat()
         async with db.execute("""
-            SELECT DISTINCT zone_id FROM events
-            WHERE store_id=? AND event_type='ZONE_ENTER' AND is_staff=0
-              AND zone_id NOT IN ('ENTRY_EXIT','STOCKROOM')
-        """, (store_id,)) as cur:
+            SELECT DISTINCT zone_id FROM zone_events
+            WHERE (store_id=? OR store_id=?) AND event_type='zone_entered'
+              AND zone_id NOT IN ('BILLING','BOH')
+        """, (store_id_a, store_id_b)) as cur:
             all_zones = {r[0] for r in await cur.fetchall()}
 
         async with db.execute("""
-            SELECT DISTINCT zone_id FROM events
-            WHERE store_id=? AND event_type='ZONE_ENTER' AND is_staff=0
-              AND timestamp >= ? AND zone_id NOT IN ('ENTRY_EXIT','STOCKROOM')
-        """, (store_id, cutoff)) as cur:
+            SELECT DISTINCT zone_id FROM zone_events
+            WHERE (store_id=? OR store_id=?) AND event_type='zone_entered'
+              AND event_time >= ? AND zone_id NOT IN ('BILLING','BOH')
+        """, (store_id_a, store_id_b, cutoff)) as cur:
             active_zones = {r[0] for r in await cur.fetchall()}
+
+        async with db.execute("""
+            SELECT camera_id, MAX(event_time) as last_seen FROM zone_events
+            WHERE store_id=? OR store_id=? GROUP BY camera_id
+        """, (store_id_a, store_id_b)) as cur:
+            rows = await cur.fetchall()
 
         for dead_zone in (all_zones - active_zones):
             anomalies.append({
@@ -74,31 +81,27 @@ async def get_anomalies(store_id: str):
                 "suggested_action": f"Check product display in {dead_zone} zone or redirect staff to engage customers"
             })
 
-        # ── 3. CONVERSION DROP ───────────────────────────────────────────────
-        # Recent 1-hour window vs earlier 3-hour window
         one_hr_ago    = (now - timedelta(hours=1)).isoformat()
         four_hrs_ago  = (now - timedelta(hours=4)).isoformat()
 
         async with db.execute("""
             SELECT
-              SUM(CASE WHEN timestamp >= ? THEN 1 ELSE 0 END)   AS recent_entries,
-              SUM(CASE WHEN timestamp <  ? THEN 1 ELSE 0 END)   AS baseline_entries
-            FROM events
-            WHERE store_id=? AND event_type='ENTRY' AND is_staff=0
-              AND timestamp >= ?
-        """, (one_hr_ago, one_hr_ago, store_id, four_hrs_ago)) as cur:
+              SUM(CASE WHEN event_time >= ? THEN 1 ELSE 0 END)   AS recent_entries,
+              SUM(CASE WHEN event_time <  ? THEN 1 ELSE 0 END)   AS baseline_entries
+            FROM zone_events
+            WHERE (store_id=? OR store_id=?) AND event_type='zone_entered'
+        """, (one_hr_ago, one_hr_ago, store_id_a, store_id_b)) as cur:
             r = await cur.fetchone()
             recent_entries   = r[0] or 0
             baseline_entries = r[1] or 0
 
         async with db.execute("""
             SELECT
-              SUM(CASE WHEN timestamp >= ? THEN 1 ELSE 0 END)   AS recent_billing,
-              SUM(CASE WHEN timestamp <  ? THEN 1 ELSE 0 END)   AS baseline_billing
-            FROM events
-            WHERE store_id=? AND event_type='BILLING_QUEUE_JOIN' AND is_staff=0
-              AND timestamp >= ?
-        """, (one_hr_ago, one_hr_ago, store_id, four_hrs_ago)) as cur:
+              SUM(CASE WHEN queue_served_ts >= ? THEN 1 ELSE 0 END)   AS recent_billing,
+              SUM(CASE WHEN queue_served_ts <  ? THEN 1 ELSE 0 END)   AS baseline_billing
+            FROM queue_events
+            WHERE (store_id=? OR store_id=?) AND event_type='queue_completed'
+        """, (one_hr_ago, one_hr_ago, store_id_a, store_id_b)) as cur:
             r = await cur.fetchone()
             recent_billing   = r[0] or 0
             baseline_billing = r[1] or 0
@@ -122,12 +125,11 @@ async def get_anomalies(store_id: str):
                     "suggested_action": "Review staffing levels, check if billing is operational, audit zone engagement"
                 })
 
-        # ── 4. STALE FEED ────────────────────────────────────────────────────
         stale_cutoff = (now - timedelta(minutes=STALE_FEED_MINUTES)).isoformat()
         async with db.execute("""
-            SELECT camera_id, MAX(timestamp) as last_seen FROM events
-            WHERE store_id=? GROUP BY camera_id
-        """, (store_id,)) as cur:
+            SELECT camera_id, MAX(event_time) as last_seen FROM zone_events
+            WHERE store_id=? OR store_id=? GROUP BY camera_id
+        """, (store_id_a, store_id_b)) as cur:
             rows = await cur.fetchall()
 
         for cam_id, last_seen in (rows or []):
